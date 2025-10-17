@@ -19,6 +19,14 @@ from datetime import datetime
 from typing import cast
 
 from flask_wtf import FlaskForm
+from flask_wtf import FlaskForm
+
+from flask_wtf.file import FileAllowed, FileSize
+
+
+from flask_wtf import FlaskForm
+
+
 from wtforms import (
     BooleanField,
     DateField,
@@ -36,6 +44,32 @@ from wtforms import (
 # TODO: Add validation, maybe use wtforms.validators??
 
 # TODO: There was some important security feature that wtforms provides, but I don't remember what; implement it
+
+
+from wtforms.validators import (
+    DataRequired, #ensures that data is inserted
+    Length, #Use this to take the length of some provided user inputs
+    ValidationError, #This ensures that an error is displayed
+)
+
+# Configuration constants for limits
+max_post_length = 280 #based on X-post limitations
+max_comment_length = 150 #Based on tiktok 
+
+max_username_length = 25
+min_username_length = 8
+
+max_password_length = 20
+min_password_length = 8
+
+max_file_size = 5 * 1024 * 1024  # 5MB in bytes
+allowed_extensions = {'png', 'jpg', 'jpeg'}
+
+def validate_not_empty(field):
+    """Custom validator to ensure field is not empty or just whitespace."""
+    
+    if not field.data or not field.data.strip():
+        raise ValidationError("This field cannot be empty or contain only whitespace")
 
 
 class LoginForm(FlaskForm):
@@ -70,16 +104,29 @@ class IndexForm(FlaskForm):
 class PostForm(FlaskForm):
     """Provides the post form for the application."""
 
-    content = TextAreaField(label="New Post", render_kw={"placeholder": "What are you thinking about?"})
-    image = FileField(label="Image")
+    content = TextAreaField(
+        label="New Post",
+        render_kw={"placeholder": "What are you thinking about?"},
+        validators=[
+            DataRequired(message="Post content cannot be empty"), validate_not_empty, Length(min=1, max=max_post_length, message=f"Post must be between 1 and {max_post_length} characters")])
+    image = FileField(
+        label="Image",
+        validators=[FileAllowed(list(allowed_extensions), message=f"Only {', '.join(allowed_extensions)} files are allowed"), FileSize(max_size=max_file_size, message=f"File size must be less than {max_file_size // (1024 * 1024)}MB")])
     submit = SubmitField(label="Post")
 
 
 class CommentsForm(FlaskForm):
     """Provides the comment form for the application."""
 
-    comment = TextAreaField(label="New Comment", render_kw={"placeholder": "What do you have to say?"})
+    comment = TextAreaField(
+        label="New Comment",
+        render_kw={"placeholder": "What do you have to say?"},
+        validators=[
+            DataRequired(),
+            validate_not_empty,
+            Length(min=1, max=max_comment_length)])
     submit = SubmitField(label="Comment")
+
 
 
 class FriendsForm(FlaskForm):
