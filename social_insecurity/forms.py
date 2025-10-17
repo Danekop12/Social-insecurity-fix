@@ -20,6 +20,7 @@ from typing import cast
 
 from flask_wtf import FlaskForm
 from flask_wtf.file import FileAllowed, FileSize
+from wtforms.validators import DataRequired, Length, EqualTo, Regexp
 from wtforms import (
     BooleanField,
     DateField,
@@ -64,23 +65,75 @@ def validate_not_empty(form, field):
 class LoginForm(FlaskForm):
     """Provides the login form for the application."""
 
-    username = StringField(label="Username", render_kw={"placeholder": "Username"})
-    password = PasswordField(label="Password", render_kw={"placeholder": "Password"})
-    remember_me = BooleanField(
-        label="Remember me"
-    )  # TODO: It would be nice to have this feature implemented, probably by using cookies
+    username = StringField(
+        label="Username",
+        validators=[
+            DataRequired(),
+            Length(min=3, max=30),
+            Regexp(r'^[a-zA-Z0-9_]+$', message="Username must contain only letters, numbers, and underscores.")
+        ],
+        render_kw={"placeholder": "Username"}
+    )
+    password = PasswordField(
+        label="Password",
+        validators=[
+            DataRequired(),
+            Length(min=6, max=128)
+        ],
+        render_kw={"placeholder": "Password"}
+    )
+    remember_me = BooleanField(label="Remember me")
     submit = SubmitField(label="Sign In")
 
 
 class RegisterForm(FlaskForm):
     """Provides the registration form for the application."""
 
-    first_name = StringField(label="First Name", render_kw={"placeholder": "First Name"})
-    last_name = StringField(label="Last Name", render_kw={"placeholder": "Last Name"})
-    username = StringField(label="Username", render_kw={"placeholder": "Username"})
-    password = PasswordField(label="Password", render_kw={"placeholder": "Password"})
-    confirm_password = PasswordField(label="Confirm Password", render_kw={"placeholder": "Confirm Password"})
+    first_name = StringField(
+        label="First Name",
+        validators=[
+            DataRequired(),
+            Length(min=1, max=50),
+            Regexp(r'^[a-zA-Z\-]+$', message="First name must contain only letters and hyphens.")
+        ],
+        render_kw={"placeholder": "First Name"}
+    )
+    last_name = StringField(
+        label="Last Name",
+        validators=[
+            DataRequired(),
+            Length(min=1, max=50),
+            Regexp(r'^[a-zA-Z\-]+$', message="Last name must contain only letters and hyphens.")
+        ],
+        render_kw={"placeholder": "Last Name"}
+    )
+    username = StringField(
+        label="Username",
+        validators=[
+            DataRequired(),
+            Length(min=3, max=30),
+            Regexp(r'^[a-zA-Z0-9_]+$', message="Username must contain only letters, numbers, and underscores.")
+        ],
+        render_kw={"placeholder": "Username"}
+    )
+    password = PasswordField(
+        label="Password",
+        validators=[
+            DataRequired(),
+            Length(min=6, max=128)
+        ],
+        render_kw={"placeholder": "Password"}
+    )
+    confirm_password = PasswordField(
+        label="Confirm Password",
+        validators=[
+            DataRequired(),
+            EqualTo('password', message="Passwords must match.")
+        ],
+        render_kw={"placeholder": "Confirm Password"}
+    )
     submit = SubmitField(label="Sign Up")
+
 
 
 class IndexForm(FlaskForm):

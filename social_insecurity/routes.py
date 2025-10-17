@@ -25,56 +25,51 @@ from social_insecurity.forms import CommentsForm, FriendsForm, IndexForm, PostFo
 @app.route("/", methods=["GET", "POST"])
 @app.route("/index", methods=["GET", "POST"])
 def index():
-    """Provides the index page for the application.
-
-    It reads the composite IndexForm and based on which form was submitted,
-    it either logs the user in or registers a new user.
-
-    If no form was submitted, it simply renders the index page.
-    """
+    """Provides the index page for the application."""
     index_form = IndexForm()
     login_form = index_form.login
     register_form = index_form.register
 
-    if login_form.is_submitted() and login_form.submit.data:
+    # Handle login
+    if login_form.validate_on_submit() and login_form.submit.data:
         get_user = f"""
-            SELECT *
-            FROM Users
-            WHERE username = '{login_form.username.data}';
-            """
+            SELECT * FROM Users WHERE username = '{login_form.username.data.replace("'", "''")}';
+        """
         user = sqlite.query(get_user, one=True)
 
-        # DELETE THIS BLOCK ONCE BCRYPT IS WORKING
         if not user:
             flash("Sorry, wrong password or username", category="warning")
             return render_template("index.html.j2", title="Welcome", form=index_form)
 
-        # Check password
         stored_hash = user["password"].encode("utf-8")
         entered_password = login_form.password.data.encode("utf-8")
 
-
-        if user is None or not bcrypt.checkpw(entered_password, stored_hash):
-            flash("Sorry, wrong password or username!", category="warning") 
-        elif bcrypt.checkpw(entered_password, stored_hash):
+        if not bcrypt.checkpw(entered_password, stored_hash):
+            flash("Sorry, wrong password or username!", category="warning")
+        else:
             return redirect(url_for("stream", username=login_form.username.data))
 
-    elif register_form.is_submitted() and register_form.submit.data:
-        if register_form.password.data != register_form.confirm_password.data:
-            flash("Passwords do not match!", category="warning")
-            return render_template("index.html.j2", title="Welcome", form=index_form)
+    # Handle registration
+    elif register_form.validate_on_submit() and register_form.submit.data:
+        salt = bcrypt.gensalt()
+        hashed_password = bcrypt.hashpw(register_form.password.data.encode("utf-8"), salt)
 
-        salt = bcrypt.gensalt()  
-        hashed_password = bcrypt.hashpw(password = register_form.password.data.encode("utf-8"), salt = salt) 
+        # Escape single quotes to prevent SQL injection
+        username = register_form.username.data.replace("'", "''")
+        first_name = register_form.first_name.data.replace("'", "''")
+        last_name = register_form.last_name.data.replace("'", "''")
+        password = hashed_password.decode("utf-8").replace("'", "''")
 
         insert_user = f"""
             INSERT INTO Users (username, first_name, last_name, password)
-            VALUES ('{register_form.username.data}', '{register_form.first_name.data}', '{register_form.last_name.data}', '{hashed_password.decode("utf-8")}');
-            """
+            VALUES ('{username}', '{first_name}', '{last_name}', '{password}');
+        """
         sqlite.query(insert_user)
+
         flash("User successfully created!", category="success")
         return redirect(url_for("index"))
 
+    # Render the page if no form is submitted or validation fails
     return render_template("index.html.j2", title="Welcome", form=index_form)
 
 
