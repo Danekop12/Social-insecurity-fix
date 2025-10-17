@@ -8,9 +8,11 @@ from pathlib import Path
 
 from flask import current_app as app
 from flask import flash, redirect, render_template, send_from_directory, url_for
+import bcrypt
 
 from social_insecurity import sqlite
 from social_insecurity.forms import CommentsForm, FriendsForm, IndexForm, PostForm, ProfileForm
+
 
 
 @app.route("/", methods=["GET", "POST"])
@@ -35,17 +37,28 @@ def index():
             """
         user = sqlite.query(get_user, one=True)
 
-        if user is None:
-            flash("Sorry, this user does not exist!", category="warning")
-        elif user["password"] != login_form.password.data:
-            flash("Sorry, wrong password!", category="warning")
-        elif user["password"] == login_form.password.data:
+        # DELETE THIS BLOCK ONCE BCRYPT IS WORKING
+        if not user:
+            flash("User not found!", category="warning")
+            return render_template("index.html.j2", title="Welcome", form=index_form)
+
+        # Check password
+        stored_hash = user["password"].encode("utf-8")
+        entered_password = login_form.password.data.encode("utf-8")
+
+
+        if user is None or not bcrypt.checkpw(entered_password, stored_hash):
+            flash("Sorry, wrong password or username!", category="warning") 
+        elif bcrypt.checkpw(entered_password, stored_hash):
             return redirect(url_for("stream", username=login_form.username.data))
 
     elif register_form.is_submitted() and register_form.submit.data:
+        salt = bcrypt.gensalt()  
+        hashed_password = bcrypt.hashpw(password = register_form.password.data.encode("utf-8"), salt = salt) 
+
         insert_user = f"""
             INSERT INTO Users (username, first_name, last_name, password)
-            VALUES ('{register_form.username.data}', '{register_form.first_name.data}', '{register_form.last_name.data}', '{register_form.password.data}');
+            VALUES ('{register_form.username.data}', '{register_form.first_name.data}', '{register_form.last_name.data}', '{hashed_password.decode("utf-8")}');
             """
         sqlite.query(insert_user)
         flash("User successfully created!", category="success")

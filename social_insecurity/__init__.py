@@ -6,6 +6,7 @@ The package contains the Flask application factory.
 from pathlib import Path
 from shutil import rmtree
 from typing import cast
+#from flask_bcrypt import Bcrypt
 
 from flask import Flask, current_app
 
@@ -34,7 +35,7 @@ def create_app(test_config=None) -> Flask:
 
     sqlite.init_app(app, schema="schema.sql")
     # login.init_app(app)
-    # bcrypt.init_app(app)
+    #bcrypt.init_app(app)
     # csrf.init_app(app)
 
     with app.app_context():
