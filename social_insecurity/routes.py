@@ -16,7 +16,7 @@ import bcrypt
 from social_insecurity import sqlite
 >>>>>>> 3aff9a7 (Lagrer lokale endringer før rebase)
 from social_insecurity.forms import CommentsForm, FriendsForm, IndexForm, PostForm, ProfileForm
-from social_insecurity.database import sqlite
+from social_insecurity import sqlite
 
 #-------------  
 # Helper func
