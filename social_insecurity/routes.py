@@ -10,7 +10,7 @@ from flask import current_app as app
 from flask import flash, redirect, render_template, send_from_directory, url_for
 import bcrypt
 from social_insecurity.forms import CommentsForm, FriendsForm, IndexForm, PostForm, ProfileForm
-from social_insecurity.database import sqlite
+from social_insecurity import sqlite
 
 #-------------  
 # Helper func
