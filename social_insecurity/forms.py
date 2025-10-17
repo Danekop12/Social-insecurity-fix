@@ -54,7 +54,7 @@ min_password_length = 8
 max_file_size = 5 * 1024 * 1024  # 5MB in bytes
 allowed_extensions = {'png', 'jpg', 'jpeg'}
 
-def validate_not_empty(field):
+def validate_not_empty(form, field):
     """Custom validator to ensure field is not empty or just whitespace."""
     
     if not field.data or not field.data.strip():
