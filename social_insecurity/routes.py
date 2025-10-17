@@ -70,7 +70,7 @@ def stream(username: str):
         """
     user = sqlite.query(get_user, one=True)
 
-    if post_form.is_submitted():
+    if post_form.validate_on_submit():
         if post_form.image.data:
             path = Path(app.instance_path) / app.config["UPLOADS_FOLDER_PATH"] / post_form.image.data.filename
             post_form.image.data.save(path)
@@ -108,7 +108,7 @@ def comments(username: str, post_id: int):
         """
     user = sqlite.query(get_user, one=True)
 
-    if comments_form.is_submitted():
+    if comments_form.validate_on_submit():
         insert_comment = f"""
             INSERT INTO Comments (p_id, u_id, comment, creation_time)
             VALUES ({post_id}, {user["id"]}, '{comments_form.comment.data}', CURRENT_TIMESTAMP);
