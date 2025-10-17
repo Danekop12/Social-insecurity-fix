@@ -19,14 +19,7 @@ from datetime import datetime
 from typing import cast
 
 from flask_wtf import FlaskForm
-from flask_wtf import FlaskForm
-
 from flask_wtf.file import FileAllowed, FileSize
-
-
-from flask_wtf import FlaskForm
-
-
 from wtforms import (
     BooleanField,
     DateField,
@@ -40,16 +33,12 @@ from wtforms import (
 
 # Defines all forms in the application, these will be instantiated by the template,
 # and the routes.py will read the values of the fields
-
 # TODO: Add validation, maybe use wtforms.validators??
-
 # TODO: There was some important security feature that wtforms provides, but I don't remember what; implement it
-
-
 from wtforms.validators import (
-    DataRequired, #ensures that data is inserted
-    Length, #Use this to take the length of some provided user inputs
-    ValidationError, #This ensures that an error is displayed
+    DataRequired,  #ensures that data is inserted
+    Length,  #Use this to take the length of some provided user inputs
+    ValidationError,  #This ensures that an error is displayed
 )
 
 # Configuration constants for limits
