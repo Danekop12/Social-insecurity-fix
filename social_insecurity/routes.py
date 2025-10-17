@@ -39,7 +39,7 @@ def index():
 
         # DELETE THIS BLOCK ONCE BCRYPT IS WORKING
         if not user:
-            flash("User not found!", category="warning")
+            flash("Sorry, wrong password or username", category="warning")
             return render_template("index.html.j2", title="Welcome", form=index_form)
 
         # Check password
@@ -53,6 +53,10 @@ def index():
             return redirect(url_for("stream", username=login_form.username.data))
 
     elif register_form.is_submitted() and register_form.submit.data:
+        if register_form.password.data != register_form.confirm_password.data:
+            flash("Passwords do not match!", category="warning")
+            return render_template("index.html.j2", title="Welcome", form=index_form)
+
         salt = bcrypt.gensalt()  
         hashed_password = bcrypt.hashpw(password = register_form.password.data.encode("utf-8"), salt = salt) 
 
