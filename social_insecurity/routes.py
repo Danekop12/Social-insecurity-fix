@@ -5,13 +5,30 @@ It also contains the SQL queries used for communicating with the database.
 """
 
 from pathlib import Path
+import os
+import secrets
+
 
 import bcrypt
 from flask import current_app as app
-from flask import flash, redirect, render_template, send_from_directory, url_for
+from flask import flash, redirect, render_template, send_from_directory, url_for, after_this_request
+from flask_wtf.csrf import CSRFProtect
 
 from social_insecurity import sqlite
 from social_insecurity.forms import CommentsForm, FriendsForm, IndexForm, PostForm, ProfileForm
+
+
+
+
+# ---------------------------
+# CSRF setup
+# ---------------------------
+app.config['SECRET_KEY'] = os.environ.get('SECRET_KEY', secrets.token_hex(32))
+app.config['WTF_CSRF_FIELD_NAME'] = 'csrf_token'
+
+# Initialize 
+csrf = CSRFProtect()
+csrf.init_app(app)
 
 #-------------
 # Helper func
@@ -22,6 +39,15 @@ from social_insecurity.forms import CommentsForm, FriendsForm, IndexForm, PostFo
 #-------------
 # ROUTES
 #-------------
+
+@app.after_request
+def hide_headers(response):
+    """Hide headers to prevent CSRF attacks."""
+    response.headers['X-Frame-Options'] = 'SAMEORIGIN'
+    response.headers['X-Content-Type-Options'] = 'nosniff'
+    response.headers['Referrer-Policy'] = 'no-referrer-when-downgrade'
+    return response
+
 @app.route("/", methods=["GET", "POST"])
 @app.route("/index", methods=["GET", "POST"])
 def index():
@@ -168,7 +194,7 @@ def friends(username: str):
         """
     user = sqlite.query(get_user, one=True)
 
-    if friends_form.is_submitted():
+    if friends_form.validate_on_submit():
         get_friend = f"""
             SELECT *
             FROM Users
@@ -221,7 +247,7 @@ def profile(username: str):
         """
     user = sqlite.query(get_user, one=True)
 
-    if profile_form.is_submitted():
+    if profile_form.validate_on_submit():
         update_profile = f"""
             UPDATE Users
             SET education='{profile_form.education.data}', employment='{profile_form.employment.data}',
