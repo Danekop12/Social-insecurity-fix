@@ -42,10 +42,12 @@ csrf.init_app(app)
 
 @app.after_request
 def hide_headers(response):
-    """Hide headers to prevent CSRF attacks."""
-    response.headers['X-Frame-Options'] = 'SAMEORIGIN'
-    response.headers['X-Content-Type-Options'] = 'nosniff'
-    response.headers['Referrer-Policy'] = 'no-referrer-when-downgrade'
+    if 'Server' in response.headers:
+        del response.headers['Server']
+    if 'Date' in response.headers:
+        response.headers['Date'] = ''
+    if 'Last-Modified' in response.headers:
+        response.headers['Last-Modified'] = ''
     return response
 
 @app.route("/", methods=["GET", "POST"])
@@ -264,4 +266,9 @@ def profile(username: str):
 @app.route("/uploads/<string:filename>")
 def uploads(filename):
     """Provides an endpoint for serving uploaded files."""
-    return send_from_directory(Path(app.instance_path) / app.config["UPLOADS_FOLDER_PATH"], filename)
+    response = send_from_directory(Path(app.instance_path) / app.config["UPLOADS_FOLDER_PATH"], filename)
+
+    # Remove timestamp headers
+    response.headers.pop('Last-Modified', None)
+    response.headers.pop('ETag', None)
+    return response
