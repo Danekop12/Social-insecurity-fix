@@ -13,6 +13,9 @@ import bcrypt
 from flask import current_app as app
 from flask import flash, redirect, render_template, send_from_directory, url_for, after_this_request
 from flask_wtf.csrf import CSRFProtect
+from functools import wraps
+from flask import abort, session
+
 
 from social_insecurity import sqlite
 from social_insecurity.forms import CommentsForm, FriendsForm, IndexForm, PostForm, ProfileForm
@@ -35,6 +38,18 @@ csrf.init_app(app)
 #-------------
 
 # Make a helper function to validate forms input!
+
+def login_required(f):
+    @wraps(f)
+    def decorated_function(username, *args, **kwargs):
+        if 'username' not in session:
+            flash("You must log in to access this page", "warning")
+            return redirect(url_for("index"))
+        if session['username'] != username:
+            flash("Unauthorized access!", "danger")
+            return abort(403)
+        return f(username, *args, **kwargs)
+    return decorated_function
 
 #-------------
 # ROUTES
@@ -75,6 +90,7 @@ def index():
         if not bcrypt.checkpw(entered_password, stored_hash):
             flash("Sorry, wrong password or username!", category="warning")
         else:
+            session['username'] = login_form.username.data  # Store logged-in user
             return redirect(url_for("stream", username=login_form.username.data))
 
     # Handle registration
@@ -102,6 +118,7 @@ def index():
 
 
 @app.route("/stream/<string:username>", methods=["GET", "POST"])
+@login_required
 def stream(username: str):
     """Provides the stream page for the application.
 
@@ -140,6 +157,7 @@ def stream(username: str):
 
 
 @app.route("/comments/<string:username>/<int:post_id>", methods=["GET", "POST"])
+@login_required
 def comments(username: str, post_id: int):
     """Provides the comments page for the application.
 
@@ -181,6 +199,7 @@ def comments(username: str, post_id: int):
 
 
 @app.route("/friends/<string:username>", methods=["GET", "POST"])
+@login_required
 def friends(username: str):
     """Provides the friends page for the application.
 
@@ -234,6 +253,7 @@ def friends(username: str):
 
 
 @app.route("/profile/<string:username>", methods=["GET", "POST"])
+@login_required
 def profile(username: str):
     """Provides the profile page for the application.
 
@@ -272,3 +292,8 @@ def uploads(filename):
     response.headers.pop('Last-Modified', None)
     response.headers.pop('ETag', None)
     return response
+
+@app.route("/logout")
+def logout():
+    session.clear()
+    return redirect(url_for("index"))
